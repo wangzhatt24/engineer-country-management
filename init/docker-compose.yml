@@ -1,0 +1,35 @@
+# dev enviroment
+
+version: '3.8'
+
+services:
+  db:
+    image: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: tyler
+      MYSQL_ROOT_PASSWORD: abc@123
+      MYSQL_DATABASE: engineer-country
+      MYSQL_PASSWORD: abc@123
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/create_schema.sql:/docker-entrypoint-initdb.d/1.sql
+      - ./database/seed_data.sql:/docker-entrypoint-initdb.d/2.sql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_ARBITRARY: 1
+      MYSQL_ROOT_PASSWORD: abc@123
+      MYSQL_USER: tyler
+      MYSQL_PASSWORD: abc@123
+    depends_on:
+      - db
+
+volumes:
+  db_data:
