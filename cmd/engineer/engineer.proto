@@ -2,9 +2,9 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
-package engineer.v1;
+package engineer;
 
-option go_package = "engineer-country-management/cmd/engineer/v1;v1";
+option go_package = "engineer-country-management/cmd/engineer";
 
 service EngineerService {
   rpc AddEngineer (AddEngineerRequest) returns (Engineer);

@@ -4,7 +4,7 @@
 // - protoc             v5.28.0--rc3
 // source: engineer.proto
 
-package v1
+package engineer
 
 import (
 	context "context"
@@ -20,11 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	EngineerService_AddEngineer_FullMethodName     = "/engineer.v1.EngineerService/AddEngineer"
-	EngineerService_ListEngineers_FullMethodName   = "/engineer.v1.EngineerService/ListEngineers"
-	EngineerService_GetEngineerById_FullMethodName = "/engineer.v1.EngineerService/GetEngineerById"
-	EngineerService_UpdateEngineer_FullMethodName  = "/engineer.v1.EngineerService/UpdateEngineer"
-	EngineerService_DeleteEngineer_FullMethodName  = "/engineer.v1.EngineerService/DeleteEngineer"
+	EngineerService_AddEngineer_FullMethodName     = "/engineer.EngineerService/AddEngineer"
+	EngineerService_ListEngineers_FullMethodName   = "/engineer.EngineerService/ListEngineers"
+	EngineerService_GetEngineerById_FullMethodName = "/engineer.EngineerService/GetEngineerById"
+	EngineerService_UpdateEngineer_FullMethodName  = "/engineer.EngineerService/UpdateEngineer"
+	EngineerService_DeleteEngineer_FullMethodName  = "/engineer.EngineerService/DeleteEngineer"
 )
 
 // EngineerServiceClient is the client API for EngineerService service.
@@ -245,7 +245,7 @@ func _EngineerService_DeleteEngineer_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var EngineerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "engineer.v1.EngineerService",
+	ServiceName: "engineer.EngineerService",
 	HandlerType: (*EngineerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

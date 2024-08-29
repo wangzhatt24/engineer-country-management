@@ -4,7 +4,7 @@
 // - protoc             v5.28.0--rc3
 // source: country.proto
 
-package v1
+package country
 
 import (
 	context "context"
@@ -20,11 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CountryService_AddCountry_FullMethodName     = "/country.v1.CountryService/AddCountry"
-	CountryService_ListCountries_FullMethodName  = "/country.v1.CountryService/ListCountries"
-	CountryService_GetCountryById_FullMethodName = "/country.v1.CountryService/GetCountryById"
-	CountryService_UpdateCountry_FullMethodName  = "/country.v1.CountryService/UpdateCountry"
-	CountryService_DeleteCountry_FullMethodName  = "/country.v1.CountryService/DeleteCountry"
+	CountryService_AddCountry_FullMethodName     = "/country.CountryService/AddCountry"
+	CountryService_ListCountries_FullMethodName  = "/country.CountryService/ListCountries"
+	CountryService_GetCountryById_FullMethodName = "/country.CountryService/GetCountryById"
+	CountryService_UpdateCountry_FullMethodName  = "/country.CountryService/UpdateCountry"
+	CountryService_DeleteCountry_FullMethodName  = "/country.CountryService/DeleteCountry"
 )
 
 // CountryServiceClient is the client API for CountryService service.
@@ -245,7 +245,7 @@ func _CountryService_DeleteCountry_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var CountryService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "country.v1.CountryService",
+	ServiceName: "country.CountryService",
 	HandlerType: (*CountryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
