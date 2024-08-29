@@ -7,7 +7,8 @@ USE `engineer-country`;
 CREATE TABLE IF NOT EXISTS `country` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `country_name` VARCHAR(255),
-    `created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS `engineer` (
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS `engineer` (
     `gender` SMALLINT,
     `country_id` BIGINT,
     `title` VARCHAR(255),
-    `created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`country_id`) REFERENCES `country`(`id`)
 );

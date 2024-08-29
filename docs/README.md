@@ -10,13 +10,13 @@
 ## By Country
 * Add a country
 * List contries
+* Get a country by id
 * Update a country
 * Delete a country
 
 ## By Engineer
 * Add a engineer
+* List engineers
 * Find a engineer
-* List engineers by country
 * Update a engineer information
 * Delete a engineer
-* 

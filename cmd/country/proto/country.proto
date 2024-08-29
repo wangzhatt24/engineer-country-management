@@ -1,0 +1,44 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+package country.v1;
+
+option go_package = "engineer-country-management/cmd/engineer/v1;v1";
+
+service CountryService {
+  rpc AddCountry (AddCountryRequest) returns (Country);
+  rpc ListCountries(google.protobuf.Empty) returns (Countries);
+  rpc GetCountryById (GetCountryRequest) returns (Country);
+  rpc UpdateCountry (UpdateCountryRequest) returns (Country);
+  rpc DeleteCountry (DeleteCountryRequest) returns (Country);
+}
+
+message Countries {
+  repeated Country countries = 1;
+}
+
+message AddCountryRequest {
+  string country_name = 1;
+}
+
+message Country {
+  string id = 1;
+  string country_name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message UpdateCountryRequest {
+  string id = 1;
+  string country_name = 2;
+}
+
+message DeleteCountryRequest {
+  string id = 1;
+}
+
+message GetCountryRequest {
+  string id = 1;
+}
+

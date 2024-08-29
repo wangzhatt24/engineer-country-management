@@ -3,6 +3,6 @@
 # docker-compose.yml directory
 COMPOSE_DIR=./init/
 
-# dev
+# dev dependency
 dev:
 	cd $(COMPOSE_DIR) && docker-compose up -d

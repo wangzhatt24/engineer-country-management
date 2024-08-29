@@ -1,0 +1,56 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+package engineer.v1;
+
+option go_package = "engineer-country-management/cmd/engineer/v1;v1";
+
+service EngineerService {
+  rpc AddEngineer (AddEngineerRequest) returns (Engineer);
+  rpc ListEngineers (google.protobuf.Empty) returns (Engineers);
+  rpc GetEngineerById (GetEngineerByIdRequest) returns (Engineer);
+  rpc UpdateEngineer (UpdateEngineerRequest) returns (Engineer);
+  rpc DeleteEngineer (DeleteEngineerRequest) returns (Engineer);
+}
+
+message GetEngineerByIdRequest {
+  int64 id = 1;
+}
+
+message AddEngineerRequest {
+  string first_name = 1;
+  string last_name = 2;
+  int32 gender = 3;
+  int64 country_id = 4;
+  string title = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message Engineer {
+  int64 id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  int32 gender = 4;
+  int64 country_id = 5;
+  string title = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message UpdateEngineerRequest {
+  int64 id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  int32 gender = 4;
+  string title = 5;
+}
+
+message DeleteEngineerRequest {
+  int64 id = 1;
+}
+
+message Engineers {
+  repeated Engineer engineers = 1;
+}
