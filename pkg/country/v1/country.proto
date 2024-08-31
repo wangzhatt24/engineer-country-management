@@ -2,9 +2,9 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
-package country;
+package country.v1;
 
-option go_package = "engineer-country-management/cmd/country";
+option go_package = "engineer-country-management/pkg/v1/country";
 
 service CountryService {
   rpc AddCountry (AddCountryRequest) returns (Country);

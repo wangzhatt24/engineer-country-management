@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
-	pb "engineer-country-management/pkg/engineer"
+	pb "engineer-country-management/pkg/engineer/v1"
 	"errors"
 	"flag"
 	"fmt"

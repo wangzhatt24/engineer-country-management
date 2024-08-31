@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	pb "engineer-country-management/pkg/engineer"
+	pb "engineer-country-management/pkg/engineer/v1"
 	"flag"
 	"log"
 	"time"
