@@ -13,7 +13,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	pb "engineer-country-management/cmd/country"
+	pb "engineer-country-management/pkg/country"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"

@@ -7,4 +7,4 @@ COMPOSE_DIR=./init/
 dev:
 	cd $(COMPOSE_DIR) && docker-compose up -d
 
-protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./engineer.proto
+# protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./engineer.proto

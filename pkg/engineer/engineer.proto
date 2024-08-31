@@ -1,6 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/empty.proto";
+// import "google/protobuf/empty.proto";
 
 package engineer;
 
@@ -8,7 +8,7 @@ option go_package = "engineer-country-management/cmd/engineer";
 
 service EngineerService {
   rpc AddEngineer (AddEngineerRequest) returns (Engineer);
-  rpc ListEngineers (google.protobuf.Empty) returns (Engineers);
+  rpc ListEngineers (ListEngineersRequest) returns (ListEngineersResponse);
   rpc GetEngineerById (GetEngineerByIdRequest) returns (Engineer);
   rpc UpdateEngineer (UpdateEngineerRequest) returns (Engineer);
   rpc DeleteEngineer (DeleteEngineerRequest) returns (Engineer);
@@ -43,12 +43,26 @@ message UpdateEngineerRequest {
   string last_name = 3;
   int32 gender = 4;
   string title = 5;
+  int64 country_id = 7;
 }
 
 message DeleteEngineerRequest {
   int64 id = 1;
 }
 
-message Engineers {
+message ListEngineersRequest {
+  int32 page_number = 1;
+  int32 page_size = 2;
+}
+
+message ListEngineersResponse {
   repeated Engineer engineers = 1;
+
+  // total engineers in db
+  int64 total_count = 2;
+
+  int32 page_number = 3;
+
+  // num of engineers in a page
+  int32 page_size = 4;
 }

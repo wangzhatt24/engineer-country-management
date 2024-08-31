@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	pb "engineer-country-management/cmd/country"
+	pb "engineer-country-management/pkg/country"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

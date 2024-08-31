@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -32,7 +31,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EngineerServiceClient interface {
 	AddEngineer(ctx context.Context, in *AddEngineerRequest, opts ...grpc.CallOption) (*Engineer, error)
-	ListEngineers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Engineers, error)
+	ListEngineers(ctx context.Context, in *ListEngineersRequest, opts ...grpc.CallOption) (*ListEngineersResponse, error)
 	GetEngineerById(ctx context.Context, in *GetEngineerByIdRequest, opts ...grpc.CallOption) (*Engineer, error)
 	UpdateEngineer(ctx context.Context, in *UpdateEngineerRequest, opts ...grpc.CallOption) (*Engineer, error)
 	DeleteEngineer(ctx context.Context, in *DeleteEngineerRequest, opts ...grpc.CallOption) (*Engineer, error)
@@ -56,9 +55,9 @@ func (c *engineerServiceClient) AddEngineer(ctx context.Context, in *AddEngineer
 	return out, nil
 }
 
-func (c *engineerServiceClient) ListEngineers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Engineers, error) {
+func (c *engineerServiceClient) ListEngineers(ctx context.Context, in *ListEngineersRequest, opts ...grpc.CallOption) (*ListEngineersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Engineers)
+	out := new(ListEngineersResponse)
 	err := c.cc.Invoke(ctx, EngineerService_ListEngineers_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -101,7 +100,7 @@ func (c *engineerServiceClient) DeleteEngineer(ctx context.Context, in *DeleteEn
 // for forward compatibility.
 type EngineerServiceServer interface {
 	AddEngineer(context.Context, *AddEngineerRequest) (*Engineer, error)
-	ListEngineers(context.Context, *emptypb.Empty) (*Engineers, error)
+	ListEngineers(context.Context, *ListEngineersRequest) (*ListEngineersResponse, error)
 	GetEngineerById(context.Context, *GetEngineerByIdRequest) (*Engineer, error)
 	UpdateEngineer(context.Context, *UpdateEngineerRequest) (*Engineer, error)
 	DeleteEngineer(context.Context, *DeleteEngineerRequest) (*Engineer, error)
@@ -118,7 +117,7 @@ type UnimplementedEngineerServiceServer struct{}
 func (UnimplementedEngineerServiceServer) AddEngineer(context.Context, *AddEngineerRequest) (*Engineer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddEngineer not implemented")
 }
-func (UnimplementedEngineerServiceServer) ListEngineers(context.Context, *emptypb.Empty) (*Engineers, error) {
+func (UnimplementedEngineerServiceServer) ListEngineers(context.Context, *ListEngineersRequest) (*ListEngineersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListEngineers not implemented")
 }
 func (UnimplementedEngineerServiceServer) GetEngineerById(context.Context, *GetEngineerByIdRequest) (*Engineer, error) {
@@ -170,7 +169,7 @@ func _EngineerService_AddEngineer_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _EngineerService_ListEngineers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(ListEngineersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -182,7 +181,7 @@ func _EngineerService_ListEngineers_Handler(srv interface{}, ctx context.Context
 		FullMethod: EngineerService_ListEngineers_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EngineerServiceServer).ListEngineers(ctx, req.(*emptypb.Empty))
+		return srv.(EngineerServiceServer).ListEngineers(ctx, req.(*ListEngineersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
