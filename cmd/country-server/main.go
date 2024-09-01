@@ -46,7 +46,7 @@ func (s server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.C
 }
 
 func (s server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
-	row := s.db.QueryRow("SELECT * from country where id = ?", in.Id)
+	row := s.db.QueryRow("SELECT * FROM country WHERE id = ?", in.Id)
 
 	var country pb.Country
 	var created_at time.Time
