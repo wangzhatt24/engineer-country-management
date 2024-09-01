@@ -16,7 +16,6 @@ import (
 	pb "engineer-country-management/pkg/country/v1"
 
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -115,32 +114,56 @@ func (s server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) 
 	return country, nil
 }
 
-func (s server) ListCountries(context.Context, *emptypb.Empty) (*pb.Countries, error) {
-	result, err := s.db.Query("SELECT * FROM country")
+func (s server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
+	// get total count
+	// get records
+	pageNumber := in.GetPageNumber()
+	pageSize := in.GetPageSize()
+
+	// ensure that page number is valid
+	if pageNumber <= 0 {
+		pageNumber = 1 // default
+	}
+
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	offset := (pageNumber - 1) * pageSize
+
+	// total countries
+	var totalCount int64
+	err := s.db.QueryRow("SELECT COUNT(*) FROM country").Scan(&totalCount)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.Query("SELECT * FROM country LIMIT ? OFFSET ?", pageSize, offset)
 	if err != nil {
 		return nil, err
 	}
 
 	var countries []*pb.Country
 
-	for result.Next() {
+	for rows.Next() {
 		var country pb.Country
 		var created_at time.Time
-		var updated_at time.Time
+		// var updated_at time.Time
 
-		err := result.Scan(&country.Id, &country.CountryName, &created_at, &updated_at)
+		err := rows.Scan(&country.Id, &country.CountryName, &created_at, &created_at)
 		if err != nil {
 			return nil, err
 		}
 
-		// time convert
-		country.CreatedAt = timestamppb.New(created_at)
-		country.UpdatedAt = timestamppb.New(updated_at)
-
 		countries = append(countries, &country)
 	}
 
-	return &pb.Countries{Countries: countries}, nil
+	return &pb.ListCountriesResponse{
+		Countries:  countries,
+		TotalCount: totalCount,
+		PageNumber: pageNumber,
+		PageSize:   pageSize,
+	}, nil
 }
 
 var (

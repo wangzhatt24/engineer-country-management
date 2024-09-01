@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -32,7 +31,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CountryServiceClient interface {
 	AddCountry(ctx context.Context, in *AddCountryRequest, opts ...grpc.CallOption) (*Country, error)
-	ListCountries(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Countries, error)
+	ListCountries(ctx context.Context, in *ListCountriesRequest, opts ...grpc.CallOption) (*ListCountriesResponse, error)
 	GetCountryById(ctx context.Context, in *GetCountryRequest, opts ...grpc.CallOption) (*Country, error)
 	UpdateCountry(ctx context.Context, in *UpdateCountryRequest, opts ...grpc.CallOption) (*Country, error)
 	DeleteCountry(ctx context.Context, in *DeleteCountryRequest, opts ...grpc.CallOption) (*Country, error)
@@ -56,9 +55,9 @@ func (c *countryServiceClient) AddCountry(ctx context.Context, in *AddCountryReq
 	return out, nil
 }
 
-func (c *countryServiceClient) ListCountries(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Countries, error) {
+func (c *countryServiceClient) ListCountries(ctx context.Context, in *ListCountriesRequest, opts ...grpc.CallOption) (*ListCountriesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Countries)
+	out := new(ListCountriesResponse)
 	err := c.cc.Invoke(ctx, CountryService_ListCountries_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -101,7 +100,7 @@ func (c *countryServiceClient) DeleteCountry(ctx context.Context, in *DeleteCoun
 // for forward compatibility.
 type CountryServiceServer interface {
 	AddCountry(context.Context, *AddCountryRequest) (*Country, error)
-	ListCountries(context.Context, *emptypb.Empty) (*Countries, error)
+	ListCountries(context.Context, *ListCountriesRequest) (*ListCountriesResponse, error)
 	GetCountryById(context.Context, *GetCountryRequest) (*Country, error)
 	UpdateCountry(context.Context, *UpdateCountryRequest) (*Country, error)
 	DeleteCountry(context.Context, *DeleteCountryRequest) (*Country, error)
@@ -118,7 +117,7 @@ type UnimplementedCountryServiceServer struct{}
 func (UnimplementedCountryServiceServer) AddCountry(context.Context, *AddCountryRequest) (*Country, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCountry not implemented")
 }
-func (UnimplementedCountryServiceServer) ListCountries(context.Context, *emptypb.Empty) (*Countries, error) {
+func (UnimplementedCountryServiceServer) ListCountries(context.Context, *ListCountriesRequest) (*ListCountriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCountries not implemented")
 }
 func (UnimplementedCountryServiceServer) GetCountryById(context.Context, *GetCountryRequest) (*Country, error) {
@@ -170,7 +169,7 @@ func _CountryService_AddCountry_Handler(srv interface{}, ctx context.Context, de
 }
 
 func _CountryService_ListCountries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(ListCountriesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -182,7 +181,7 @@ func _CountryService_ListCountries_Handler(srv interface{}, ctx context.Context,
 		FullMethod: CountryService_ListCountries_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CountryServiceServer).ListCountries(ctx, req.(*emptypb.Empty))
+		return srv.(CountryServiceServer).ListCountries(ctx, req.(*ListCountriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
