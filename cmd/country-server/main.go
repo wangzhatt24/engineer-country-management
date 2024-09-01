@@ -15,6 +15,7 @@ import (
 
 	pb "engineer-country-management/pkg/country/v1"
 
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -171,6 +172,13 @@ var (
 )
 
 func main() {
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	client.Set(context.Background(), "hi", "vhi", time.Second)
 	db, err := sql.Open("mysql", "tyler:abc@123@tcp(127.0.0.1:3306)/engineer-country?parseTime=true")
 
 	if err != nil {
