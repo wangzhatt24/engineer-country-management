@@ -17,12 +17,96 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type server struct {
 	pb.UnimplementedCountryServiceServer
-	db *sql.DB
+	db          *sql.DB
+	redisClient *redis.Client
+}
+
+// redis sections
+func redisGetCountryKey(id int64) string {
+	return fmt.Sprintf("%s%d", "country:", id)
+}
+
+func (s server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
+	countryBytes, err := s.redisClient.Get(ctx, redisGetCountryKey(in.GetId())).Bytes()
+	// loi doc cache
+	// tra ve nil
+
+	if err != nil {
+		fmt.Printf("\nerror when reading redis (GetCountryById): %v", err)
+		return nil, fmt.Errorf("\nerror when reading redis (GetCountryById): %v", err)
+	}
+
+	if countryBytes == nil {
+		fmt.Printf("\ncountry not found in redis %v (GetCountryById)", in.GetId())
+		return nil, fmt.Errorf("\ncountry not found in redis %v (GetCountryById)", in.GetId())
+	} else {
+		var country pb.Country
+		if err := proto.Unmarshal(countryBytes, &country); err != nil {
+			return nil, fmt.Errorf("\nerror when unmarshal country bytes")
+		} else {
+			return &country, nil
+		}
+	}
+}
+
+func (s server) redisUpdateCountryById(ctx context.Context, country *pb.Country) error {
+	countryBytes, err := proto.Marshal(country)
+	if err != nil {
+		return fmt.Errorf("\nconvert bytes error %v", err)
+	}
+	_, err = s.redisClient.Set(ctx, redisGetCountryKey(country.GetId()), countryBytes, time.Hour).Result()
+	if err != nil {
+		return fmt.Errorf("\nerror when update redis\n%v", err)
+	} else {
+		fmt.Printf("\nupdated contry %v to redis", country.GetId())
+		return nil
+	}
+}
+
+// end redis sections
+
+// mysql sections
+func (s server) mysqlFetchCountryById(in *pb.GetCountryRequest) (*pb.Country, error) {
+	row := s.db.QueryRow("SELECT * FROM country WHERE id = ?", in.GetId())
+
+	var country pb.Country
+	var created_at time.Time
+	var updated_at time.Time
+
+	err := row.Scan(&country.Id, &country.CountryName, &created_at, &updated_at)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.Country{
+		Id:          country.Id,
+		CountryName: country.CountryName,
+		CreatedAt:   timestamppb.New(created_at),
+		UpdatedAt:   timestamppb.New(updated_at),
+	}, nil
+}
+
+// end mysql sections
+
+// method sections
+func (s server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
+	country, err := s.redisFetchCountryById(ctx, in)
+	if err != nil {
+		country, err := s.mysqlFetchCountryById(in)
+		if err != nil {
+			return nil, err
+		}
+
+		return country, err
+	}
+
+	return country, err
 }
 
 func (s server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country, error) {
@@ -41,26 +125,6 @@ func (s server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.C
 	return &pb.Country{
 		Id:          id,
 		CountryName: in.CountryName,
-		CreatedAt:   timestamppb.New(created_at),
-		UpdatedAt:   timestamppb.New(updated_at),
-	}, nil
-}
-
-func (s server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
-	row := s.db.QueryRow("SELECT * FROM country WHERE id = ?", in.Id)
-
-	var country pb.Country
-	var created_at time.Time
-	var updated_at time.Time
-
-	err := row.Scan(&country.Id, &country.CountryName, &created_at, &updated_at)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.Country{
-		Id:          country.Id,
-		CountryName: country.CountryName,
 		CreatedAt:   timestamppb.New(created_at),
 		UpdatedAt:   timestamppb.New(updated_at),
 	}, nil
@@ -92,7 +156,7 @@ func (s server) DeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) 
 }
 
 func (s server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
-	result, err := s.db.Exec("UPDATE country SET country_name = ? WHERE country.id = ?", in.CountryName, in.Id)
+	result, err := s.db.Exec("UPDATE country SET country_name = ? WHERE country.id = ?", in.GetCountryName(), in.GetId())
 
 	if err != nil {
 		return nil, err
@@ -100,16 +164,21 @@ func (s server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) 
 
 	rf, err := result.RowsAffected()
 	if err != nil {
-		return nil, err
+		fmt.Println("\nerror when check row affected")
 	}
 
 	if rf != 1 {
-		return nil, errors.New("no country updated")
+		fmt.Println("\nno rows updated")
 	}
 
-	country, err := s.GetCountryById(ctx, &pb.GetCountryRequest{Id: in.Id})
+	country, err := s.mysqlFetchCountryById(&pb.GetCountryRequest{Id: in.GetId()})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error when fetch country by id (mysqlFetchCountryById): %v", err)
+	}
+
+	err = s.redisUpdateCountryById(ctx, country)
+	if err != nil {
+		fmt.Printf("\nerror when update country to redis %v", err)
 	}
 
 	return country, nil
@@ -167,18 +236,19 @@ func (s server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest) 
 	}, nil
 }
 
+// end method sections
+
 var (
 	port = flag.Int("port", 50051, "The server port")
 )
 
 func main() {
-	client := redis.NewClient(&redis.Options{
+	redisClient := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
 
-	client.Set(context.Background(), "hi", "vhi", time.Second)
 	db, err := sql.Open("mysql", "tyler:abc@123@tcp(127.0.0.1:3306)/engineer-country?parseTime=true")
 
 	if err != nil {
@@ -195,7 +265,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterCountryServiceServer(s, &server{db: db})
+	pb.RegisterCountryServiceServer(s, &server{db: db, redisClient: redisClient})
 	log.Printf("server listening at %v", lis.Addr())
 
 	if err := s.Serve(lis); err != nil {
