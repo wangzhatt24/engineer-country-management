@@ -32,7 +32,7 @@ func redisGetCountryKey(id int64) string {
 	return fmt.Sprintf("%s%d", "country:", id)
 }
 
-func (s server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
+func (s *server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
 	countryBytes, err := s.redisClient.Get(ctx, redisGetCountryKey(in.GetId())).Bytes()
 	// loi doc cache
 	// tra ve nil
@@ -55,7 +55,7 @@ func (s server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequ
 	}
 }
 
-func (s server) redisUpdateCountryById(ctx context.Context, country *pb.Country) error {
+func (s *server) redisUpdateCountryById(ctx context.Context, country *pb.Country) error {
 	countryBytes, err := proto.Marshal(country)
 	if err != nil {
 		return fmt.Errorf("\nconvert bytes error %v", err)
@@ -72,7 +72,7 @@ func (s server) redisUpdateCountryById(ctx context.Context, country *pb.Country)
 // end redis sections
 
 // mysql sections
-func (s server) mysqlFetchCountryById(in *pb.GetCountryRequest) (*pb.Country, error) {
+func (s *server) mysqlFetchCountryById(in *pb.GetCountryRequest) (*pb.Country, error) {
 	row := s.db.QueryRow("SELECT * FROM country WHERE id = ?", in.GetId())
 
 	var country pb.Country
@@ -92,26 +92,9 @@ func (s server) mysqlFetchCountryById(in *pb.GetCountryRequest) (*pb.Country, er
 	}, nil
 }
 
-// end mysql sections
-
-// method sections
-func (s server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
-	country, err := s.redisFetchCountryById(ctx, in)
-	if err != nil {
-		country, err := s.mysqlFetchCountryById(in)
-		if err != nil {
-			return nil, err
-		}
-
-		return country, err
-	}
-
-	return country, err
-}
-
-func (s server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country, error) {
+func (s *server) mysqlAddCountry(in *pb.AddCountryRequest) (*pb.Country, error) {
 	created_at, updated_at := time.Now(), time.Now()
-	result, err := s.db.Exec("INSERT INTO country(country_name, created_at, updated_at) VALUES (?, ?, ?)", in.CountryName, created_at, updated_at)
+	result, err := s.db.Exec("INSERT INTO country(country_name, created_at, updated_at) VALUES (?, ?, ?)", in.GetCountryName(), created_at, updated_at)
 
 	if err != nil {
 		return nil, err
@@ -130,8 +113,35 @@ func (s server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.C
 	}, nil
 }
 
+// end mysql sections
+
+// method sections
+func (s *server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
+	country, err := s.redisFetchCountryById(ctx, in)
+	if err != nil {
+		country, err := s.mysqlFetchCountryById(in)
+		if err != nil {
+			return nil, err
+		}
+
+		return country, err
+	}
+
+	return country, err
+}
+
+func (s *server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country, error) {
+	country, err := s.mysqlAddCountry(in)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return country, nil
+}
+
 // should be named DeleteCountryById
-func (s server) DeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.Country, error) {
+func (s *server) DeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.Country, error) {
 	country, err := s.GetCountryById(ctx, &pb.GetCountryRequest{Id: in.Id})
 	if err != nil {
 		return nil, errors.New("error when deleting country")
@@ -155,7 +165,7 @@ func (s server) DeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) 
 	return nil, errors.New("error when deleting country")
 }
 
-func (s server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
+func (s *server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
 	result, err := s.db.Exec("UPDATE country SET country_name = ? WHERE country.id = ?", in.GetCountryName(), in.GetId())
 
 	if err != nil {
@@ -184,7 +194,7 @@ func (s server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) 
 	return country, nil
 }
 
-func (s server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
+func (s *server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
 	// get total count
 	// get records
 	pageNumber := in.GetPageNumber()
