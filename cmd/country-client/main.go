@@ -34,12 +34,12 @@ func main() {
 	defer cancel()
 
 	// r, err := c.AddCountry(ctx, &pb.AddCountryRequest{CountryName: "New0"})
-	// r, err := c.GetCountryById(ctx, &pb.GetCountryRequest{Id: 245})
-	// r, err := c.DeleteCountry(ctx, &pb.DeleteCountryRequest{Id: 244})
-	r, err := c.UpdateCountry(ctx, &pb.UpdateCountryRequest{Id: 245, CountryName: "New 4"})
-	// r, err := c.ListCountries(ctx, &pb.ListCountriesRequest{
-	// 	PageSize: 10, PageNumber: 7,
-	// })
+	// r, err := c.GetCountryById(ctx, &pb.GetCountryRequest{Id: 246})
+	// r, err := c.DeleteCountry(ctx, &pb.DeleteCountryRequest{Id: 245})
+	// r, err := c.UpdateCountry(ctx, &pb.UpdateCountryRequest{Id: 246, CountryName: "New1"})
+	r, err := c.ListCountries(ctx, &pb.ListCountriesRequest{
+		PageSize: 10, PageNumber: 3,
+	})
 
 	if err != nil {
 		log.Fatal("error when get country by id", err)

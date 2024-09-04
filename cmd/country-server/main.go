@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -30,6 +29,17 @@ type server struct {
 // redis sections
 func redisGetCountryKey(id int64) string {
 	return fmt.Sprintf("%s%d", "country:", id)
+}
+
+func redisListCountriesResponseKey(pageNum int32, pageSize int32) string {
+	/*
+		use this to create key
+		countries
+		page_num int32
+		page_size int32
+	*/
+
+	return fmt.Sprintf("countries:%d:%d", pageNum, pageSize)
 }
 
 func (s *server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
@@ -67,6 +77,86 @@ func (s *server) redisUpdateCountryById(ctx context.Context, country *pb.Country
 		fmt.Printf("\nupdated contry %v to redis", country.GetId())
 		return nil
 	}
+}
+
+func (s *server) redisDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) error {
+	_, err := s.redisClient.Del(ctx, redisGetCountryKey(in.GetId())).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *server) redisFetchListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
+	countriesResponseBytes, err := s.redisClient.Get(ctx, redisListCountriesResponseKey(in.GetPageNumber(), in.GetPageSize())).Bytes()
+	// loi doc cache
+	// tra ve nil
+
+	if err != nil {
+		return nil, fmt.Errorf("\nerror when reading redis (redisFetchListCountries): %v", err)
+	}
+
+	if countriesResponseBytes == nil {
+		return nil, fmt.Errorf("\ncountries not found in redis (GetCountryById)")
+	} else {
+		var countriesResponse pb.ListCountriesResponse
+		if err := proto.Unmarshal(countriesResponseBytes, &countriesResponse); err != nil {
+			return nil, fmt.Errorf("\nerror when unmarshal country bytes")
+		} else {
+			return &countriesResponse, nil
+		}
+	}
+}
+
+func (s *server) redisUpdateListCountries(ctx context.Context, in *pb.ListCountriesResponse) error {
+	/*
+		use this to create key
+		countries
+		total_count int64
+		page_num int32
+		page_size int32
+	*/
+	countriesBytes, err := proto.Marshal(&pb.ListCountriesResponse{Countries: in.GetCountries(), TotalCount: in.GetTotalCount(), PageNumber: in.GetPageNumber(), PageSize: in.GetPageSize()})
+	if err != nil {
+		return err
+	}
+	_, err = s.redisClient.Set(ctx, redisListCountriesResponseKey(in.GetPageNumber(), in.GetPageSize()), countriesBytes, time.Hour).Result()
+	if err != nil {
+		return fmt.Errorf("\nredis set list countries error orcur (redisListCountries) %v", err)
+	}
+
+	return nil
+}
+
+func (s *server) redisDeleteAllListCountries(ctx context.Context) error {
+	keys, err := s.redisClient.Keys(ctx, "countries").Result()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.redisClient.Del(ctx, keys...).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *server) redisDeleteAllByPattern(ctx context.Context, pattern string) error {
+	// Sử dụng pipeline
+	pipeline := s.redisClient.Pipeline()
+	keys, err := pipeline.Keys(ctx, pattern).Result()
+	if err != nil {
+		return err
+	}
+
+	for _, key := range keys {
+		pipeline.Del(ctx, key)
+	}
+
+	_, err = pipeline.Exec(ctx)
+	return err
 }
 
 // end redis sections
@@ -113,59 +203,31 @@ func (s *server) mysqlAddCountry(in *pb.AddCountryRequest) (*pb.Country, error) 
 	}, nil
 }
 
-// end mysql sections
-
-// method sections
-func (s *server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
-	country, err := s.redisFetchCountryById(ctx, in)
-	if err != nil {
-		country, err := s.mysqlFetchCountryById(in)
-		if err != nil {
-			return nil, err
-		}
-
-		return country, err
-	}
-
-	return country, err
-}
-
-func (s *server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country, error) {
-	country, err := s.mysqlAddCountry(in)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return country, nil
-}
-
-// should be named DeleteCountryById
-func (s *server) DeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.Country, error) {
+func (s *server) mysqlDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.Country, error) {
 	country, err := s.GetCountryById(ctx, &pb.GetCountryRequest{Id: in.Id})
 	if err != nil {
-		return nil, errors.New("error when deleting country")
+		return nil, fmt.Errorf("\nerror when deleting country (mysqlDeleteCountry) %v", err)
 	}
 
 	result, err := s.db.Exec("DELETE FROM country where id = ?", in.Id)
 
 	if err != nil {
-		log.Fatalf("error when delete country %v", err)
+		return nil, fmt.Errorf("\nerror when delete country %v", err)
 	}
 
 	ra, err := result.RowsAffected()
 	if err != nil {
-		log.Fatalf("error checking row affected %v", ra)
+		return nil, fmt.Errorf("\nerror checking row affected %v", err)
 	}
 
 	if ra == 1 {
 		return country, nil
 	}
 
-	return nil, errors.New("error when deleting country")
+	return nil, fmt.Errorf("\nerror when deleting country")
 }
 
-func (s *server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
+func (s *server) mysqlUpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
 	result, err := s.db.Exec("UPDATE country SET country_name = ? WHERE country.id = ?", in.GetCountryName(), in.GetId())
 
 	if err != nil {
@@ -194,7 +256,7 @@ func (s *server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest)
 	return country, nil
 }
 
-func (s *server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
+func (s *server) mysqlListCountries(in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
 	// get total count
 	// get records
 	pageNumber := in.GetPageNumber()
@@ -244,6 +306,86 @@ func (s *server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest)
 		PageNumber: pageNumber,
 		PageSize:   pageSize,
 	}, nil
+}
+
+// end mysql sections
+
+// method sections
+func (s *server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
+	country, err := s.redisFetchCountryById(ctx, in)
+	if err != nil {
+		country, err := s.mysqlFetchCountryById(in)
+		if err != nil {
+			return nil, err
+		}
+
+		return country, nil
+	}
+
+	return country, nil
+}
+
+func (s *server) AddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country, error) {
+	country, err := s.mysqlAddCountry(in)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return country, nil
+}
+
+// should be named DeleteCountryById
+func (s *server) DeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.Country, error) {
+	country, err := s.mysqlDeleteCountry(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.redisDeleteCountry(ctx, in)
+	if err != nil {
+		fmt.Printf("\n deleted in mysql but error orcur when deleting in redis")
+	}
+
+	return country, nil
+}
+
+func (s *server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
+	country, err := s.mysqlUpdateCountry(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.redisUpdateCountryById(ctx, country)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return country, nil
+}
+
+func (s *server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
+	// check if in redis
+	listCountriesResponse, err := s.redisFetchListCountries(ctx, in)
+	if err != nil {
+		fmt.Println(err)
+
+		listCountriesResponse, err := s.mysqlListCountries(in)
+		if err != nil {
+			return nil, err
+		}
+
+		err = s.redisUpdateListCountries(ctx, listCountriesResponse)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("countries update to redis")
+
+		return listCountriesResponse, nil
+	}
+
+	fmt.Println("countries found in redis")
+	return listCountriesResponse, nil
 }
 
 // end method sections
