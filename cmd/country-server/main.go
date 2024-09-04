@@ -31,17 +31,6 @@ func redisGetCountryKey(id int64) string {
 	return fmt.Sprintf("%s%d", "country:", id)
 }
 
-func redisListCountriesResponseKey(pageNum int32, pageSize int32) string {
-	/*
-		use this to create key
-		countries
-		page_num int32
-		page_size int32
-	*/
-
-	return fmt.Sprintf("countries:%d:%d", pageNum, pageSize)
-}
-
 func (s *server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
 	countryBytes, err := s.redisClient.Get(ctx, redisGetCountryKey(in.GetId())).Bytes()
 	// loi doc cache
@@ -86,77 +75,6 @@ func (s *server) redisDeleteCountry(ctx context.Context, in *pb.DeleteCountryReq
 	}
 
 	return nil
-}
-
-func (s *server) redisFetchListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
-	countriesResponseBytes, err := s.redisClient.Get(ctx, redisListCountriesResponseKey(in.GetPageNumber(), in.GetPageSize())).Bytes()
-	// loi doc cache
-	// tra ve nil
-
-	if err != nil {
-		return nil, fmt.Errorf("\nerror when reading redis (redisFetchListCountries): %v", err)
-	}
-
-	if countriesResponseBytes == nil {
-		return nil, fmt.Errorf("\ncountries not found in redis (GetCountryById)")
-	} else {
-		var countriesResponse pb.ListCountriesResponse
-		if err := proto.Unmarshal(countriesResponseBytes, &countriesResponse); err != nil {
-			return nil, fmt.Errorf("\nerror when unmarshal country bytes")
-		} else {
-			return &countriesResponse, nil
-		}
-	}
-}
-
-func (s *server) redisUpdateListCountries(ctx context.Context, in *pb.ListCountriesResponse) error {
-	/*
-		use this to create key
-		countries
-		total_count int64
-		page_num int32
-		page_size int32
-	*/
-	countriesBytes, err := proto.Marshal(&pb.ListCountriesResponse{Countries: in.GetCountries(), TotalCount: in.GetTotalCount(), PageNumber: in.GetPageNumber(), PageSize: in.GetPageSize()})
-	if err != nil {
-		return err
-	}
-	_, err = s.redisClient.Set(ctx, redisListCountriesResponseKey(in.GetPageNumber(), in.GetPageSize()), countriesBytes, time.Hour).Result()
-	if err != nil {
-		return fmt.Errorf("\nredis set list countries error orcur (redisListCountries) %v", err)
-	}
-
-	return nil
-}
-
-func (s *server) redisDeleteAllListCountries(ctx context.Context) error {
-	keys, err := s.redisClient.Keys(ctx, "countries").Result()
-	if err != nil {
-		return err
-	}
-
-	_, err = s.redisClient.Del(ctx, keys...).Result()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *server) redisDeleteAllByPattern(ctx context.Context, pattern string) error {
-	// Sử dụng pipeline
-	pipeline := s.redisClient.Pipeline()
-	keys, err := pipeline.Keys(ctx, pattern).Result()
-	if err != nil {
-		return err
-	}
-
-	for _, key := range keys {
-		pipeline.Del(ctx, key)
-	}
-
-	_, err = pipeline.Exec(ctx)
-	return err
 }
 
 // end redis sections
@@ -365,26 +283,11 @@ func (s *server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest)
 }
 
 func (s *server) ListCountries(ctx context.Context, in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
-	// check if in redis
-	listCountriesResponse, err := s.redisFetchListCountries(ctx, in)
+	listCountriesResponse, err := s.mysqlListCountries(in)
 	if err != nil {
-		fmt.Println(err)
-
-		listCountriesResponse, err := s.mysqlListCountries(in)
-		if err != nil {
-			return nil, err
-		}
-
-		err = s.redisUpdateListCountries(ctx, listCountriesResponse)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println("countries update to redis")
-
-		return listCountriesResponse, nil
+		return nil, err
 	}
 
-	fmt.Println("countries found in redis")
 	return listCountriesResponse, nil
 }
 
