@@ -237,6 +237,7 @@ func (s *server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (
 			return nil, err
 		}
 
+		s.redisUpdateCountryById(ctx, country)
 		return country, nil
 	}
 

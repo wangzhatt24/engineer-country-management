@@ -22,3 +22,17 @@ Cấu hình: Nên đưa các thông số cấu hình như địa chỉ database,
 Validation: Chưa thấy có validate input, nên thêm vào để đảm bảo tính đúng đắn của dữ liệu.
 
 Unit test: Chưa thấy có unit test, nên thêm vào để đảm bảo chất lượng code.
+
+Về việc đảm bảo dữ liệu giữa redis và mysql, liệu có thể sử dụng cái này không?
+
+Lock Redis, lock quá trình ghi bằng SETNX
+
+Mở Transaction Mysql
+
+Update Mysql, nếu lỗi rollback
+	
+Update Redis, nếu lỗi rollback Mysql
+
+Commit Mysql
+
+Unlock Redis
