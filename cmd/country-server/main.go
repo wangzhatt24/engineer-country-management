@@ -203,7 +203,7 @@ func (s *server) mysqlListCountries(in *pb.ListCountriesRequest) (*pb.ListCountr
 		return nil, err
 	}
 
-	var countries []*pb.Country
+	var countries pb.Countries
 
 	for rows.Next() {
 		var country pb.Country
@@ -215,11 +215,11 @@ func (s *server) mysqlListCountries(in *pb.ListCountriesRequest) (*pb.ListCountr
 			return nil, err
 		}
 
-		countries = append(countries, &country)
+		countries.Country = append(countries.Country, &country)
 	}
 
 	return &pb.ListCountriesResponse{
-		Countries:  countries,
+		Countries:  &countries,
 		TotalCount: totalCount,
 		PageNumber: pageNumber,
 		PageSize:   pageSize,

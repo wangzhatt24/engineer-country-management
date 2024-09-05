@@ -14,7 +14,7 @@ service CountryService {
 }
 
 message Countries {
-  repeated Country countries = 1;
+  repeated Country country = 1;
 }
 
 message AddCountryRequest {
@@ -47,7 +47,7 @@ message ListCountriesRequest {
 }
 
 message ListCountriesResponse {
-  repeated Country countries = 1;
+  Countries countries = 1;
   int64 total_count = 2;
   int32 page_number = 3;
   int32 page_size = 4;
