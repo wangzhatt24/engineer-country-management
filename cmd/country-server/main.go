@@ -61,7 +61,7 @@ func (s *server) redisUpdateCountryById(ctx context.Context, country *pb.Country
 	}
 	_, err = s.redisClient.Set(ctx, redisGetCountryKey(country.GetId()), countryBytes, time.Hour).Result()
 	if err != nil {
-		return fmt.Errorf("\nerror when update redis\n%v", err)
+		return fmt.Errorf("\nerror when update redis %v", err)
 	} else {
 		fmt.Printf("\nupdated contry %v to redis", country.GetId())
 		return nil
