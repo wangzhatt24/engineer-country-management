@@ -12,13 +12,15 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"engineer-country-management/cmd/country-server/internal/interceptors"
+	"engineer-country-management/internal/pkg/cache"
 	redisWrapper "engineer-country-management/internal/pkg/redis"
 	pb "engineer-country-management/pkg/country/v1"
 
 	"github.com/redis/go-redis/v9"
 
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -26,61 +28,6 @@ type server struct {
 	pb.UnimplementedCountryServiceServer
 	db          *sql.DB
 	redisClient *redis.Client
-}
-
-// redis sections
-func redisGetCountryKey(id int64) string {
-	return fmt.Sprintf("%s%d", "country:", id)
-}
-
-func redisGetCountCountryKey(id int64) string {
-	return fmt.Sprintf("count:country:%d", id)
-}
-
-func (s *server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
-	countryBytes, err := s.redisClient.Get(ctx, redisGetCountryKey(in.GetId())).Bytes()
-	// loi doc cache
-	// tra ve nil
-
-	if err != nil {
-		fmt.Printf("\nerror when reading redis (GetCountryById): %v", err)
-		return nil, fmt.Errorf("\nerror when reading redis (GetCountryById): %v", err)
-	}
-
-	if countryBytes == nil {
-		fmt.Printf("\ncountry not found in redis %v (GetCountryById)", in.GetId())
-		return nil, fmt.Errorf("\ncountry not found in redis %v (GetCountryById)", in.GetId())
-	} else {
-		var country pb.Country
-		if err := proto.Unmarshal(countryBytes, &country); err != nil {
-			return nil, fmt.Errorf("\nerror when unmarshal country bytes")
-		} else {
-			return &country, nil
-		}
-	}
-}
-
-func (s *server) redisUpdateCountryById(ctx context.Context, country *pb.Country) error {
-	countryBytes, err := proto.Marshal(country)
-	if err != nil {
-		return fmt.Errorf("\nconvert bytes error %v", err)
-	}
-	_, err = s.redisClient.Set(ctx, redisGetCountryKey(country.GetId()), countryBytes, time.Hour).Result()
-	if err != nil {
-		return fmt.Errorf("\nerror when update redis %v", err)
-	} else {
-		fmt.Printf("\nupdated contry %v to redis", country.GetId())
-		return nil
-	}
-}
-
-func (s *server) redisDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) error {
-	_, err := s.redisClient.Del(ctx, redisGetCountryKey(in.GetId())).Result()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // end redis sections
@@ -172,7 +119,7 @@ func (s *server) mysqlUpdateCountry(ctx context.Context, in *pb.UpdateCountryReq
 		return nil, fmt.Errorf("error when fetch country by id (mysqlFetchCountryById): %v", err)
 	}
 
-	err = s.redisUpdateCountryById(ctx, country)
+	err = cache.RedisUpdateCountryById(ctx, country)
 	if err != nil {
 		fmt.Printf("\nerror when update country to redis %v", err)
 	}
@@ -236,14 +183,14 @@ func (s *server) mysqlListCountries(in *pb.ListCountriesRequest) (*pb.ListCountr
 
 // method sections
 func (s *server) GetCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
-	country, err := s.redisFetchCountryById(ctx, in)
+	country, err := cache.RedisFetchCountryById(ctx, in)
 	if err != nil {
 		country, err := s.mysqlFetchCountryById(in)
 		if err != nil {
 			return nil, err
 		}
 
-		s.redisUpdateCountryById(ctx, country)
+		cache.RedisUpdateCountryById(ctx, country)
 		return country, nil
 	}
 
@@ -267,7 +214,7 @@ func (s *server) DeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest)
 		return nil, err
 	}
 
-	err = s.redisDeleteCountry(ctx, in)
+	err = cache.RedisDeleteCountry(ctx, in)
 	if err != nil {
 		fmt.Printf("\n deleted in mysql but error orcur when deleting in redis")
 	}
@@ -281,7 +228,7 @@ func (s *server) UpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest)
 		return nil, err
 	}
 
-	err = s.redisUpdateCountryById(ctx, country)
+	err = cache.RedisUpdateCountryById(ctx, country)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -322,7 +269,7 @@ func main() {
 	}
 
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(incrementCountryCountInterceptor),
+		grpc.UnaryInterceptor(interceptors.IncrementCountryCountInterceptor),
 	)
 	pb.RegisterCountryServiceServer(s, &server{db: db, redisClient: redisClient})
 	log.Printf("server listening at %v", lis.Addr())

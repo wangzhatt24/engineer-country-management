@@ -1,7 +1,8 @@
-package main
+package interceptors
 
 import (
 	"context"
+	"engineer-country-management/internal/pkg/cache"
 	redisWrapper "engineer-country-management/internal/pkg/redis"
 	pb "engineer-country-management/pkg/country/v1"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func incrementCountryCountInterceptor(
+func IncrementCountryCountInterceptor(
 	ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
@@ -25,7 +26,7 @@ func incrementCountryCountInterceptor(
 		if countryRequest, ok := req.(*pb.GetCountryRequest); ok {
 			redisClient := redisWrapper.GetClient()
 			countryID := countryRequest.GetId() // Lấy ID quốc gia
-			redisKey := redisGetCountCountryKey(countryID)
+			redisKey := cache.RedisGetCountCountryKey(countryID)
 			channel := fmt.Sprintf("log:count:country:%d", countryID)
 
 			// Increase count in Redis asynchronously
