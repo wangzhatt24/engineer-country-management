@@ -1,0 +1,1 @@
+Use to get redis instance 
