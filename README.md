@@ -36,3 +36,17 @@ Update Redis, nếu lỗi rollback Mysql
 Commit Mysql
 
 Unlock Redis
+
+
+Thử nghiệm 
+
+Thêm chức năng đếm số lượng đếm get country bẳng redis
+
+Khi có người gọi get country by id -> thất bại -> nil, lỗi
+
+Nếu thành công trả về dữ liệu + update redis đếm bằng INCR( Tính Atomic) -> 
+
+pub/sub: khi có người get country by id thành công -> đẩy vào pub -> sub đọc và log ra
+
+queue-cron-job: cứ sau 10s sao lưu đếm trên redis vào database
+

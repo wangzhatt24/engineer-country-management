@@ -12,9 +12,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	redisWrapper "engineer-country-management/internal/pkg/redis"
 	pb "engineer-country-management/pkg/country/v1"
 
 	"github.com/redis/go-redis/v9"
+
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -29,6 +31,10 @@ type server struct {
 // redis sections
 func redisGetCountryKey(id int64) string {
 	return fmt.Sprintf("%s%d", "country:", id)
+}
+
+func redisGetCountCountryKey(id int64) string {
+	return fmt.Sprintf("count:country:%d", id)
 }
 
 func (s *server) redisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
@@ -299,13 +305,8 @@ var (
 )
 
 func main() {
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
 	db, err := sql.Open("mysql", "tyler:abc@123@tcp(127.0.0.1:3306)/engineer-country?parseTime=true")
+	redisClient := redisWrapper.GetClient()
 
 	if err != nil {
 		log.Fatal(err)
@@ -320,7 +321,9 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(incrementCountryCountInterceptor),
+	)
 	pb.RegisterCountryServiceServer(s, &server{db: db, redisClient: redisClient})
 	log.Printf("server listening at %v", lis.Addr())
 
