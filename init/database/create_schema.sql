@@ -22,3 +22,8 @@ CREATE TABLE IF NOT EXISTS `engineer` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`country_id`) REFERENCES `country`(`id`)
 );
+
+CREATE TABLE IF NOT EXISTS `country_counts` (
+    `key` VARCHAR(255) PRIMARY KEY,
+    `value` BIGINT
+)
