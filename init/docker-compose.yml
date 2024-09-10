@@ -38,6 +38,17 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis_insight
+    restart: always
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis_insight:/data
+ 
 volumes:
   db_data:
   redis-data:
+  redis_insight:
