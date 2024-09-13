@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"engineer-country-management/cmd/country-server/internal/country_interceptors"
+	"engineer-country-management/cmd/country_server/internal/country_interceptors"
 	countryImplement "engineer-country-management/internal/pkg/country_implement"
 
 	pb "engineer-country-management/pkg/country/v1"

@@ -99,7 +99,6 @@ func CountryCountPublish(conn *rmq.Connection, queue *rmq.Queue) error {
 		return fmt.Errorf("error when convert struct delivery to bytes %v", err)
 	}
 
-	// sai
 	err = (*queue).PublishBytes(deliveryBytes)
 	if err != nil {
 		return fmt.Errorf("error when publish %v", err)
