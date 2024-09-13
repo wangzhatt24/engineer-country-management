@@ -52,14 +52,8 @@ services:
     image: elasticsearch:8.15.1
     container_name: elasticsearch
     environment:
-      - cluster.name=docker-cluster
-      - node.name=node-1
-      - discovery.seed_hosts=node-1
-      - cluster.initial_master_nodes=node-1
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=password
     volumes:
       - elasticsearch_data:/data
     ports:
@@ -71,6 +65,8 @@ services:
     container_name: kibana
     depends_on:
       - elasticsearch
+    volumes:
+      - "kibana_data:/data"
     ports:
       - "5601:5601"
 
@@ -88,3 +84,4 @@ volumes:
   redis_insight:
   elasticsearch_data:
   logstash_data:
+  kibana_data:

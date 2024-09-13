@@ -16,7 +16,7 @@ type CountryCount struct {
 	Value int64
 }
 
-func GetBulkUpdate(countryCounts *[]CountryCount) string {
+func GetBulkUpdateQuery(countryCounts *[]CountryCount) string {
 	// Tạo câu lệnh SQL cho bulk insert/update
 	var sqlStr string
 
@@ -99,7 +99,8 @@ func CountryCountPublish(conn *rmq.Connection, queue *rmq.Queue) error {
 		return fmt.Errorf("error when convert struct delivery to bytes %v", err)
 	}
 
-	err = (*queue).Publish(string(deliveryBytes))
+	// sai
+	err = (*queue).PublishBytes(deliveryBytes)
 	if err != nil {
 		return fmt.Errorf("error when publish %v", err)
 	}

@@ -37,6 +37,8 @@ Commit Mysql
 
 Unlock Redis
 
+=> Không được vì khả năng đảm bảo transaction trên nhiều service đối với redis bị hạn chế, duy mysql hỗ trợ
+
 
 Thử nghiệm 
 
@@ -49,4 +51,21 @@ Nếu thành công trả về dữ liệu + update redis đếm bằng INCR( Tí
 pub/sub: khi có người get country by id thành công -> đẩy vào pub -> sub đọc và log ra
 
 queue-cron-job: cứ sau 10s sao lưu đếm trên redis vào database
+
+Làm sao triển khai elastic search
+
+Làm cho chức năng tìm kiếm country trước, tìm kiếm bằng tên nhé, nhưng tìm thì tìm sao?
+Cho nó tìm kiếm chính xác hay fuzzy
+
+Ok làm cả 2, 1 cho chính xác, 2 fuzzy
+
+Trước khi làm 2 chức năng này, dữ liệu trên elastic search ở đâu ra?
+
+- Viết bulk code golang gọi tất cả dữ liệu trong mysql -> đổ vào -> quá nhiều -> mất nhiều thời gian
+
+- Triển khai bắt sự kiện insert, update, delete dữ liệu trong service của mình:
+  + Khi insert thành công vào mysql -> Bỏ dữ liệu vào queue insert es -> Sau đó trả về dữ liệu cho người dùng(Không chặn), còn việc insert vào es để consumer lo
+  + Khi update thành công vào mysql -> Bỏ vào queue update es -> Sau đó trả về dữ liệu cho người dùng(không chặn), còn việc update vào es để consumer lo
+  + Khi delete thành công trong mysql cũng xử lí tương tự
+  + Khi gọi search es không trả về được dữ liệu
 

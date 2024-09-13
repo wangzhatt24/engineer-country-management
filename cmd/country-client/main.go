@@ -34,10 +34,10 @@ func main() {
 	defer cancel()
 
 	// r, err := c.AddCountry(ctx, &pb.AddCountryRequest{CountryName: "New0"})
-	r, err := c.GetCountryById(ctx, &pb.GetCountryRequest{Id: 110})
+	// r, err := c.GetCountryById(ctx, &pb.GetCountryRequest{Id: 110})
 
-	// r, err := c.DeleteCountry(ctx, &pb.DeleteCountryRequest{Id: 247})
-	// r, err := c.UpdateCountry(ctx, &pb.UpdateCountryRequest{Id: 230, CountryName: "New 230"})
+	// r, err := c.DeleteCountry(ctx, &pb.DeleteCountryRequest{Id: 296})
+	r, err := c.UpdateCountry(ctx, &pb.UpdateCountryRequest{Id: 297, CountryName: "New New"})
 	// r, err := c.ListCountries(ctx, &pb.ListCountriesRequest{
 	// 	PageSize: 10, PageNumber: 3,
 	// })

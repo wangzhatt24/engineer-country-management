@@ -30,7 +30,7 @@ func (consumer *CountryCountConsumer) Consume(delivery rmq.Delivery) {
 
 	// perform task
 	log.Printf("\nperforming task %v", countryCounts)
-	query := producer.GetBulkUpdate(&countryCounts)
+	query := producer.GetBulkUpdateQuery(&countryCounts)
 	_, err := db.Exec(query)
 	if err != nil {
 		log.Fatalf("error when executed query :%v", err)
