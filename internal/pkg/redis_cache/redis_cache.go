@@ -1,16 +1,18 @@
-package cache
+package redis_cache
 
 import (
 	"context"
-	"engineer-country-management/internal/pkg/redis"
 	pb "engineer-country-management/pkg/country/v1"
 	"fmt"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/proto"
 )
 
-var redisClient = redis.GetClient()
+type RedisCache struct {
+	RedisClient *redis.Client
+}
 
 // redis sections
 func RedisGetCountryKey(id int64) string {
@@ -21,8 +23,8 @@ func RedisGetCountCountryKey(id int64) string {
 	return fmt.Sprintf("count:country:%d", id)
 }
 
-func RedisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
-	countryBytes, err := redisClient.Get(ctx, RedisGetCountryKey(in.GetId())).Bytes()
+func (redisCache *RedisCache) RedisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.Country, error) {
+	countryBytes, err := redisCache.RedisClient.Get(ctx, RedisGetCountryKey(in.GetId())).Bytes()
 	// loi doc cache
 	// tra ve nil
 
@@ -44,22 +46,22 @@ func RedisFetchCountryById(ctx context.Context, in *pb.GetCountryRequest) (*pb.C
 	}
 }
 
-func RedisUpdateCountryById(ctx context.Context, country *pb.Country) error {
+func (redisCache *RedisCache) RedisUpdateCountryById(ctx context.Context, country *pb.Country) error {
 	countryBytes, err := proto.Marshal(country)
 	if err != nil {
 		return fmt.Errorf("\nconvert bytes error %v", err)
 	}
-	_, err = redisClient.Set(ctx, RedisGetCountryKey(country.GetId()), countryBytes, time.Hour).Result()
+	_, err = redisCache.RedisClient.Set(ctx, RedisGetCountryKey(country.GetId()), countryBytes, time.Hour).Result()
 	if err != nil {
 		return fmt.Errorf("\nerror when update redis %v", err)
 	} else {
-		fmt.Printf("\nupdated contry %v to redis", country.GetId())
+		fmt.Printf("\nupdated country %v to redis\n", country.GetId())
 		return nil
 	}
 }
 
-func RedisDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) error {
-	_, err := redisClient.Del(ctx, RedisGetCountryKey(in.GetId())).Result()
+func (redisCache *RedisCache) RedisDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) error {
+	_, err := redisCache.RedisClient.Del(ctx, RedisGetCountryKey(in.GetId())).Result()
 	if err != nil {
 		return err
 	}

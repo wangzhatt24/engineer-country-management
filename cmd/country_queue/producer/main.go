@@ -8,24 +8,40 @@ import (
 	"syscall"
 
 	"github.com/adjust/rmq/v5"
+	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 )
 
 func main() {
+
+	// init connection
 	errChan := make(chan<- error)
 	connection, err := rmq.OpenConnection("country_count_producer_connection", "tcp", "localhost:6379", 0, errChan)
 	if err != nil {
 		panic(err)
 	}
 
+	// init queue
 	countryCountQueue, err := connection.OpenQueue("country_count_queue")
 	if err != nil {
 		panic(err)
 	}
 
+	// init redis client
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	// init cron and publish job
 	c := cron.New()
 	c.AddFunc("@every 1s", func() {
-		err := country_queue.CountryCountPublish(&connection, &countryCountQueue)
+		countryQueue := country_queue.CountryCountProducer{
+			RedisClient: redisClient,
+		}
+
+		err := countryQueue.CountryCountPublish(&connection, &countryCountQueue)
 		if err != nil {
 			log.Println(err)
 		}
@@ -33,14 +49,10 @@ func main() {
 
 	c.Start()
 
-	// Bắt tín hiệu từ hệ điều hành (Ctrl+C, SIGINT, SIGTERM)
+	// Listen to os sisnal (Ctrl+C, SIGINT, SIGTERM)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	// Chờ tín hiệu để dừng chương trình
 	<-sigs
-
-	log.Println("Shutting down producer...")
 
 	log.Println("Producer stopped")
 }

@@ -5,6 +5,8 @@ services:
   db:
     image: mysql
     restart: always
+    networks:
+      - app_net
     ports:
       - "3306:3306"
     environment:
@@ -20,6 +22,8 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     restart: always
+    networks:
+      - app_net
     ports:
       - "8080:80"
     environment:
@@ -34,6 +38,8 @@ services:
     image: redis:latest
     container_name: redis
     restart: always
+    networks:
+      - app_net
     ports:
       - "6379:6379"
     volumes:
@@ -43,6 +49,8 @@ services:
     image: redis/redisinsight:latest
     container_name: redis_insight
     restart: always
+    networks:
+      - app_net
     ports:
       - "5540:5540"
     volumes:
@@ -52,32 +60,51 @@ services:
     image: elasticsearch:8.15.1
     container_name: elasticsearch
     environment:
-      - discovery.type=single-node
-      - ELASTIC_PASSWORD=password
-    volumes:
-      - elasticsearch_data:/data
+    - discovery.type=single-node
+    - xpack.security.enabled=false
+    - ELASTIC_PASSWORD=password
+    - bootstrap.memory_lock=true
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - app_net
     ports:
       - "9200:9200"
       - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
  
   kibana:
     image: kibana:8.15.1 
     container_name: kibana
     depends_on:
       - elasticsearch
-    volumes:
-      - "kibana_data:/data"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - app_net
     ports:
       - "5601:5601"
+    volumes:
+      - kibana_data:/data
 
   logstash:
     image: logstash:8.15.1
     container_name: logstash
+    networks:
+      - app_net
     volumes:
       - logstash_data:/data
     depends_on:
       - elasticsearch
       
+networks:
+  app_net:
+    driver: bridge
+
 volumes:
   db_data:
   redis-data:

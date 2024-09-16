@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CountryService_AddCountry_FullMethodName     = "/country.v1.CountryService/AddCountry"
-	CountryService_ListCountries_FullMethodName  = "/country.v1.CountryService/ListCountries"
-	CountryService_GetCountryById_FullMethodName = "/country.v1.CountryService/GetCountryById"
-	CountryService_UpdateCountry_FullMethodName  = "/country.v1.CountryService/UpdateCountry"
-	CountryService_DeleteCountry_FullMethodName  = "/country.v1.CountryService/DeleteCountry"
+	CountryService_AddCountry_FullMethodName               = "/country.v1.CountryService/AddCountry"
+	CountryService_ListCountries_FullMethodName            = "/country.v1.CountryService/ListCountries"
+	CountryService_GetCountryById_FullMethodName           = "/country.v1.CountryService/GetCountryById"
+	CountryService_UpdateCountry_FullMethodName            = "/country.v1.CountryService/UpdateCountry"
+	CountryService_DeleteCountry_FullMethodName            = "/country.v1.CountryService/DeleteCountry"
+	CountryService_SearchCountryFuzzyByName_FullMethodName = "/country.v1.CountryService/SearchCountryFuzzyByName"
 )
 
 // CountryServiceClient is the client API for CountryService service.
@@ -35,6 +36,7 @@ type CountryServiceClient interface {
 	GetCountryById(ctx context.Context, in *GetCountryRequest, opts ...grpc.CallOption) (*Country, error)
 	UpdateCountry(ctx context.Context, in *UpdateCountryRequest, opts ...grpc.CallOption) (*Country, error)
 	DeleteCountry(ctx context.Context, in *DeleteCountryRequest, opts ...grpc.CallOption) (*Country, error)
+	SearchCountryFuzzyByName(ctx context.Context, in *SearchCountryFuzzyByNameRequest, opts ...grpc.CallOption) (*Countries, error)
 }
 
 type countryServiceClient struct {
@@ -95,6 +97,16 @@ func (c *countryServiceClient) DeleteCountry(ctx context.Context, in *DeleteCoun
 	return out, nil
 }
 
+func (c *countryServiceClient) SearchCountryFuzzyByName(ctx context.Context, in *SearchCountryFuzzyByNameRequest, opts ...grpc.CallOption) (*Countries, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Countries)
+	err := c.cc.Invoke(ctx, CountryService_SearchCountryFuzzyByName_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CountryServiceServer is the server API for CountryService service.
 // All implementations must embed UnimplementedCountryServiceServer
 // for forward compatibility.
@@ -104,6 +116,7 @@ type CountryServiceServer interface {
 	GetCountryById(context.Context, *GetCountryRequest) (*Country, error)
 	UpdateCountry(context.Context, *UpdateCountryRequest) (*Country, error)
 	DeleteCountry(context.Context, *DeleteCountryRequest) (*Country, error)
+	SearchCountryFuzzyByName(context.Context, *SearchCountryFuzzyByNameRequest) (*Countries, error)
 	mustEmbedUnimplementedCountryServiceServer()
 }
 
@@ -128,6 +141,9 @@ func (UnimplementedCountryServiceServer) UpdateCountry(context.Context, *UpdateC
 }
 func (UnimplementedCountryServiceServer) DeleteCountry(context.Context, *DeleteCountryRequest) (*Country, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCountry not implemented")
+}
+func (UnimplementedCountryServiceServer) SearchCountryFuzzyByName(context.Context, *SearchCountryFuzzyByNameRequest) (*Countries, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchCountryFuzzyByName not implemented")
 }
 func (UnimplementedCountryServiceServer) mustEmbedUnimplementedCountryServiceServer() {}
 func (UnimplementedCountryServiceServer) testEmbeddedByValue()                        {}
@@ -240,6 +256,24 @@ func _CountryService_DeleteCountry_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CountryService_SearchCountryFuzzyByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchCountryFuzzyByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).SearchCountryFuzzyByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_SearchCountryFuzzyByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).SearchCountryFuzzyByName(ctx, req.(*SearchCountryFuzzyByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CountryService_ServiceDesc is the grpc.ServiceDesc for CountryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +300,10 @@ var CountryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteCountry",
 			Handler:    _CountryService_DeleteCountry_Handler,
+		},
+		{
+			MethodName: "SearchCountryFuzzyByName",
+			Handler:    _CountryService_SearchCountryFuzzyByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

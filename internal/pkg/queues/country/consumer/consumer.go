@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"engineer-country-management/internal/pkg/mysql"
 	"log"
-	"time"
 
 	producer "engineer-country-management/internal/pkg/queues/country/producer"
 
@@ -16,7 +15,6 @@ type CountryCountConsumer struct{}
 func (consumer *CountryCountConsumer) Consume(delivery rmq.Delivery) {
 	db := mysql.GetClient()
 	var countryCounts []producer.CountryCount
-	time.Sleep(5 * time.Second)
 	if err := json.Unmarshal([]byte(delivery.Payload()), &countryCounts); err != nil {
 		// handle json error
 		log.Printf("\nerror when parse json %v", err)

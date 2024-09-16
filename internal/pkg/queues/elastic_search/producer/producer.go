@@ -29,7 +29,12 @@ type Message struct {
 	Country     Country
 }
 
-func AddCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Country) error {
+type QueueElasticSearchProducer struct {
+	// conn  *rmq.Connection
+	Queue *rmq.Queue
+}
+
+func (p *QueueElasticSearchProducer) AddCountryPublish(country Country) error {
 	message := Message{MessageType: Add, Country: country}
 
 	deliveryBytes, err := json.Marshal(message)
@@ -37,7 +42,7 @@ func AddCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Country) 
 		return fmt.Errorf("error when convert country to bytes")
 	}
 
-	err = (*queue).PublishBytes(deliveryBytes)
+	err = (*p.Queue).PublishBytes(deliveryBytes)
 	if err != nil {
 		return fmt.Errorf("err when publish %v", err)
 	}
@@ -47,7 +52,7 @@ func AddCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Country) 
 	return nil
 }
 
-func UpdateCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Country) error {
+func (p *QueueElasticSearchProducer) UpdateCountryPublish(country Country) error {
 	message := Message{MessageType: Update, Country: country}
 
 	deliveryBytes, err := json.Marshal(message)
@@ -55,7 +60,7 @@ func UpdateCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Countr
 		return fmt.Errorf("error when convert country to bytes")
 	}
 
-	err = (*queue).PublishBytes(deliveryBytes)
+	err = (*p.Queue).PublishBytes(deliveryBytes)
 	if err != nil {
 		return fmt.Errorf("err when published update message: %v", err)
 	}
@@ -65,7 +70,7 @@ func UpdateCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Countr
 	return nil
 }
 
-func DeleteCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Country) error {
+func (p *QueueElasticSearchProducer) DeleteCountryPublish(country Country) error {
 	message := Message{MessageType: Delete, Country: country}
 
 	deliveryBytes, err := json.Marshal(message)
@@ -73,7 +78,7 @@ func DeleteCountryPublish(conn *rmq.Connection, queue *rmq.Queue, country Countr
 		return fmt.Errorf("error when convert country to bytes")
 	}
 
-	err = (*queue).PublishBytes(deliveryBytes)
+	err = (*p.Queue).PublishBytes(deliveryBytes)
 	if err != nil {
 		return fmt.Errorf("err when published delete message: %v", err)
 	}

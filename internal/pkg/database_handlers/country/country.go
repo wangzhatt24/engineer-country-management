@@ -2,21 +2,24 @@ package country
 
 import (
 	"context"
-	"engineer-country-management/internal/pkg/cache"
+	"database/sql"
+	"engineer-country-management/internal/pkg/redis_cache"
 	"fmt"
 	"time"
 
-	mysqlWrapper "engineer-country-management/internal/pkg/mysql"
 	pb "engineer-country-management/pkg/country/v1"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-var db = mysqlWrapper.GetClient()
+type CountryDatabaseHandler struct {
+	DB         *sql.DB
+	RedisCache *redis_cache.RedisCache
+}
 
 // mysql sections
-func MysqlFetchCountryById(id int64) (*pb.Country, error) {
-	row := db.QueryRow("SELECT * FROM country WHERE id = ?", id)
+func (h *CountryDatabaseHandler) MysqlFetchCountryById(id int64) (*pb.Country, error) {
+	row := h.DB.QueryRow("SELECT * FROM country WHERE id = ?", id)
 
 	var country pb.Country
 	var created_at time.Time
@@ -35,9 +38,9 @@ func MysqlFetchCountryById(id int64) (*pb.Country, error) {
 	}, nil
 }
 
-func MysqlAddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country, error) {
+func (h *CountryDatabaseHandler) MysqlAddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country, error) {
 	created_at, updated_at := time.Now(), time.Now()
-	result, err := db.Exec("INSERT INTO country(country_name, created_at, updated_at) VALUES (?, ?, ?)", in.GetCountryName(), created_at, updated_at)
+	result, err := h.DB.Exec("INSERT INTO country(country_name, created_at, updated_at) VALUES (?, ?, ?)", in.GetCountryName(), created_at, updated_at)
 
 	if err != nil {
 		return nil, err
@@ -56,14 +59,14 @@ func MysqlAddCountry(ctx context.Context, in *pb.AddCountryRequest) (*pb.Country
 	}, nil
 }
 
-func MysqlDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.Country, error) {
+func (h *CountryDatabaseHandler) MysqlDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.Country, error) {
 	// country, err := s.GetCountryById(ctx, &pb.GetCountryRequest{Id: in.Id})
-	country, err := MysqlFetchCountryById(in.GetId())
+	country, err := h.MysqlFetchCountryById(in.GetId())
 	if err != nil {
 		return nil, fmt.Errorf("\nerror when deleting country (mysqlDeleteCountry) %v", err)
 	}
 
-	result, err := db.Exec("DELETE FROM country where id = ?", in.GetId())
+	result, err := h.DB.Exec("DELETE FROM country where id = ?", in.GetId())
 
 	if err != nil {
 		return nil, fmt.Errorf("\nerror when delete country %v", err)
@@ -81,8 +84,8 @@ func MysqlDeleteCountry(ctx context.Context, in *pb.DeleteCountryRequest) (*pb.C
 	return nil, fmt.Errorf("\nerror when deleting country")
 }
 
-func MysqlUpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
-	result, err := db.Exec("UPDATE country SET country_name = ? WHERE country.id = ?", in.GetCountryName(), in.GetId())
+func (h *CountryDatabaseHandler) MysqlUpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.Country, error) {
+	result, err := h.DB.Exec("UPDATE country SET country_name = ? WHERE country.id = ?", in.GetCountryName(), in.GetId())
 
 	if err != nil {
 		return nil, err
@@ -97,20 +100,20 @@ func MysqlUpdateCountry(ctx context.Context, in *pb.UpdateCountryRequest) (*pb.C
 		fmt.Println("\nno rows updated")
 	}
 
-	country, err := MysqlFetchCountryById(in.GetId())
+	country, err := h.MysqlFetchCountryById(in.GetId())
 	if err != nil {
 		return nil, fmt.Errorf("error when fetch country by id (mysqlFetchCountryById): %v", err)
 	}
 
-	err = cache.RedisUpdateCountryById(ctx, country)
+	err = h.RedisCache.RedisUpdateCountryById(ctx, country)
 	if err != nil {
-		fmt.Printf("\nerror when update country to redis %v", err)
+		fmt.Printf("\nerror when update country to redis %v\n", err)
 	}
 
 	return country, nil
 }
 
-func MysqlListCountries(in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
+func (h *CountryDatabaseHandler) MysqlListCountries(in *pb.ListCountriesRequest) (*pb.ListCountriesResponse, error) {
 	// get total count
 	// get records
 	pageNumber := in.GetPageNumber()
@@ -129,12 +132,12 @@ func MysqlListCountries(in *pb.ListCountriesRequest) (*pb.ListCountriesResponse,
 
 	// total countries
 	var totalCount int64
-	err := db.QueryRow("SELECT COUNT(*) FROM country").Scan(&totalCount)
+	err := h.DB.QueryRow("SELECT COUNT(*) FROM country").Scan(&totalCount)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := db.Query("SELECT * FROM country LIMIT ? OFFSET ?", pageSize, offset)
+	rows, err := h.DB.Query("SELECT * FROM country LIMIT ? OFFSET ?", pageSize, offset)
 	if err != nil {
 		return nil, err
 	}

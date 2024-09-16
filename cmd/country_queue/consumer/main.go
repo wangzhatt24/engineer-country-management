@@ -39,7 +39,7 @@ func main() {
 		log.Fatalf("\nadd consumer failed %v", err)
 	}
 
-	fmt.Printf("\nnew consumer: %v", name)
+	fmt.Printf("\nnew consumer: %v\n", name)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)

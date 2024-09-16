@@ -32,7 +32,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	// r, err := c.GetEngineerById(ctx, &pb.GetEngineerByIdRequest{Id: 1})
+	now := time.Now()
+
+	r, err := c.GetEngineerById(ctx, &pb.GetEngineerByIdRequest{Id: 1})
 	// r, err := c.AddEngineer(ctx,
 	// 	&pb.AddEngineerRequest{
 	// 		FirstName: "Tyler",
@@ -54,9 +56,12 @@ func main() {
 	// 	CountryId: 1,
 	// })
 
-	r, err := c.ListEngineers(ctx, &pb.ListEngineersRequest{
-		PageNumber: 1, PageSize: 10,
-	})
+	// r, err := c.ListEngineers(ctx, &pb.ListEngineersRequest{
+	// 	PageNumber: 1, PageSize: 10,
+	// })
+
+	duration := time.Since(now)
+	log.Print(duration)
 
 	if err != nil {
 		log.Fatal(err)

@@ -3,17 +3,21 @@ package country_count_producer
 import (
 	"context"
 	"encoding/json"
-	"engineer-country-management/internal/pkg/redis"
 	"fmt"
 	"log"
 	"strconv"
 
 	"github.com/adjust/rmq/v5"
+	"github.com/redis/go-redis/v9"
 )
 
 type CountryCount struct {
 	Key   string
 	Value int64
+}
+
+type CountryCountProducer struct {
+	RedisClient *redis.Client
 }
 
 func GetBulkUpdateQuery(countryCounts *[]CountryCount) string {
@@ -34,8 +38,7 @@ func GetBulkUpdateQuery(countryCounts *[]CountryCount) string {
 	return query
 }
 
-func GetCountryCount() []CountryCount {
-	redisClient := redis.GetClient()
+func (p *CountryCountProducer) GetCountryCount() []CountryCount {
 	var countryCounts []CountryCount
 
 	// Sử dụng SCAN để tìm tất cả các keys phù hợp với pattern
@@ -46,7 +49,7 @@ func GetCountryCount() []CountryCount {
 		var err error
 
 		// Thực hiện SCAN
-		keys, cursor, err = redisClient.Scan(context.Background(), cursor, pattern, 0).Result()
+		keys, cursor, err = p.RedisClient.Scan(context.Background(), cursor, pattern, 0).Result()
 		if err != nil {
 			log.Fatalf("could not scan keys: %v", err)
 		}
@@ -57,7 +60,7 @@ func GetCountryCount() []CountryCount {
 			fmt.Println("Found key:", key)
 
 			// Lấy giá trị của key
-			value, err := redisClient.Get(context.Background(), key).Result()
+			value, err := p.RedisClient.Get(context.Background(), key).Result()
 			if err != nil {
 				log.Printf("could not get value for key %s: %v", key, err)
 				continue
@@ -87,8 +90,8 @@ func GetCountryCount() []CountryCount {
 	return countryCounts
 }
 
-func CountryCountPublish(conn *rmq.Connection, queue *rmq.Queue) error {
-	countryCounts := GetCountryCount()
+func (p *CountryCountProducer) CountryCountPublish(conn *rmq.Connection, queue *rmq.Queue) error {
+	countryCounts := p.GetCountryCount()
 
 	if len(countryCounts) == 0 {
 		return fmt.Errorf("country counts is empty")

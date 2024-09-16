@@ -11,6 +11,7 @@ service CountryService {
   rpc GetCountryById (GetCountryRequest) returns (Country);
   rpc UpdateCountry (UpdateCountryRequest) returns (Country);
   rpc DeleteCountry (DeleteCountryRequest) returns (Country);
+  rpc SearchCountryFuzzyByName(SearchCountryFuzzyByNameRequest) returns (Countries);
 }
 
 message Countries {
@@ -51,4 +52,8 @@ message ListCountriesResponse {
   int64 total_count = 2;
   int32 page_number = 3;
   int32 page_size = 4;
+}
+
+message SearchCountryFuzzyByNameRequest {
+  string country_name = 1;
 }

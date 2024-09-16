@@ -69,3 +69,14 @@ Trước khi làm 2 chức năng này, dữ liệu trên elastic search ở đâ
   + Khi delete thành công trong mysql cũng xử lí tương tự
   + Khi gọi search es không trả về được dữ liệu
 
+Van de:
+
+fix countCountry ok
+
+xem lai redis va database - refector connection
+
+trien khai fuzzy search name country ok
+
+sua lai proto ok
+
+
