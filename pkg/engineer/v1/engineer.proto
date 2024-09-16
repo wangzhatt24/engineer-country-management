@@ -11,7 +11,7 @@ service EngineerService {
   rpc ListEngineers (ListEngineersRequest) returns (ListEngineersResponse);
   rpc GetEngineerById (GetEngineerByIdRequest) returns (Engineer);
   rpc UpdateEngineer (UpdateEngineerRequest) returns (Engineer);
-  rpc DeleteEngineer (DeleteEngineerRequest) returns (Engineer);
+  rpc DeleteEngineerById (DeleteEngineerRequest) returns (Engineer);
 }
 
 message GetEngineerByIdRequest {

@@ -34,7 +34,7 @@ func main() {
 
 	now := time.Now()
 
-	r, err := c.GetEngineerById(ctx, &pb.GetEngineerByIdRequest{Id: 1})
+	// r, err := c.GetEngineerById(ctx, &pb.GetEngineerByIdRequest{Id: 1})
 	// r, err := c.AddEngineer(ctx,
 	// 	&pb.AddEngineerRequest{
 	// 		FirstName: "Tyler",
@@ -48,12 +48,12 @@ func main() {
 	// r, err := c.DeleteEngineer(ctx, &pb.DeleteEngineerRequest{Id: 100001})
 
 	// r, err := c.UpdateEngineer(ctx, &pb.UpdateEngineerRequest{
-	// 	Id:        100002,
-	// 	FirstName: "tyler 3",
-	// 	LastName:  "wang 2",
+	// 	Id:        100003,
+	// 	FirstName: "none",
+	// 	LastName:  "wang",
 	// 	Gender:    0,
 	// 	Title:     "Golang Developer",
-	// 	CountryId: 1,
+	// 	CountryId: 2,
 	// })
 
 	// r, err := c.ListEngineers(ctx, &pb.ListEngineersRequest{
