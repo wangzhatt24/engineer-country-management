@@ -17,7 +17,6 @@ type CountryDatabaseHandler struct {
 	RedisCache *redis_cache.RedisCache
 }
 
-// mysql sections
 func (h *CountryDatabaseHandler) MysqlFetchCountryById(id int64) (*pb.Country, error) {
 	row := h.DB.QueryRow("SELECT * FROM country WHERE id = ?", id)
 
@@ -164,5 +163,3 @@ func (h *CountryDatabaseHandler) MysqlListCountries(in *pb.ListCountriesRequest)
 		PageSize:   pageSize,
 	}, nil
 }
-
-// end mysql sections

@@ -45,7 +45,7 @@ func main() {
 	// 	},
 	// )
 
-	// r, err := c.DeleteEngineer(ctx, &pb.DeleteEngineerRequest{Id: 100001})
+	r, err := c.DeleteEngineerById(ctx, &pb.DeleteEngineerRequest{Id: 100001})
 
 	// r, err := c.UpdateEngineer(ctx, &pb.UpdateEngineerRequest{
 	// 	Id:        100003,

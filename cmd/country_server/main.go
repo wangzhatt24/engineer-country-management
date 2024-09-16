@@ -11,7 +11,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"engineer-country-management/cmd/country_server/internal/country_interceptors"
-	countryImplement "engineer-country-management/internal/pkg/country_implement"
+	"engineer-country-management/internal/pkg/country/country_implement"
 	"engineer-country-management/internal/pkg/database_handlers/country"
 	"engineer-country-management/internal/pkg/redis_cache"
 
@@ -92,7 +92,7 @@ func main() {
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(countryInterceptors),
 	)
-	pb.RegisterCountryServiceServer(server, &countryImplement.Server{EsClient: esClient, RedisCache: redisCacheCountry, DBHandler: &dbHandler})
+	pb.RegisterCountryServiceServer(server, &country_implement.CountryImplement{EsClient: esClient, RedisCache: redisCacheCountry, DBHandler: &dbHandler})
 	log.Printf("server listening at %v", lis.Addr())
 
 	// start service
